@@ -1,5 +1,6 @@
 package com.sdk.proxy.presentation.ui.screen
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,9 +25,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sdk.proxy.presentation.ui.component.ConnectionInfoCard
 import com.sdk.proxy.presentation.ui.component.ConnectionStatusCard
 import com.sdk.proxy.presentation.ui.component.ServerBottomSheet
@@ -38,8 +39,10 @@ import com.sdk.proxy.presentation.viewmodel.VpnViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VpnHomeScreen(
-    viewModel: VpnViewModel = viewModel()
+    viewModel: VpnViewModel,
+    activity: Activity
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     var showServerSheet by remember { mutableStateOf(false) }
     var showSettingsSheet by remember { mutableStateOf(false) }
@@ -88,13 +91,21 @@ fun VpnHomeScreen(
             // Connection Status Card
             ConnectionStatusCard(
                 isConnected = uiState.connectionState.isConnected,
-                onToggleConnection = { viewModel.toggleConnection() }
+                isLoading = uiState.isLoading,
+                onToggleConnection = {
+                    viewModel.toggleConnection(context, activity)
+                }
             )
 
             // Server Selection Card
             ServerSelectionCard(
                 selectedServer = uiState.selectedServer,
-                onClick = { showServerSheet = true }
+                isConnected = uiState.connectionState.isConnected,
+                onClick = {
+                    if (!uiState.connectionState.isConnected) {
+                        showServerSheet = true
+                    }
+                }
             )
 
             // Statistics Cards
